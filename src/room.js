@@ -1163,7 +1163,7 @@ export function createRoom({ sofaWidth = 3.72, sofaDepth = 1.72, plan = null } =
   group.add(decor);
   const lamp = buildFloorLamp(oak);
   lamp.group.position.set(-halfW - 0.49, 0, 0.35);
-  if (plan) lamp.group.position.set(ROOM.x0 + 0.36, 0, ROOM.z1 - 0.36);   // window corner: reading light for the chaise
+  if (plan) lamp.group.position.set(ROOM.x1 - 0.3, 0, ROOM.z0 + 0.3);   // dead corner beside the closet, next to the side table
   decor.add(lamp.group);
   const side = buildSideTable(oak);
   side.position.set(halfW + 0.39, 0, 0.45);
@@ -1171,7 +1171,7 @@ export function createRoom({ sofaWidth = 3.72, sofaDepth = 1.72, plan = null } =
   decor.add(side);
   const olive = buildOlive();
   olive.position.set(3.0, 0, 0.35);
-  if (plan) olive.position.set(ROOM.x1 - 0.38, 0, ROOM.z0 + 0.3);        // dead nook beside the closet, off the walkway
+  if (plan) olive.position.set(plan.olive.x, 0, plan.olive.z);           // beside the TV unit, clear of the walkway
   decor.add(olive);
   decor.add(buildPrints(oak));
   const table = buildCoffeeTable(oak);

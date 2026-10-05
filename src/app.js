@@ -168,6 +168,7 @@ const PLAN = {
   tvWallEnd: rx(VR.tvWall),
   corridor: 1.2,
   coffee: COFFEE,
+  olive: { x: TV_X + VR.unit.w / 2 + 0.28, z: rz(VR.d) - 0.34 },
 };
 
 // Room
@@ -759,7 +760,9 @@ function updateHotspots() {
 // Dimensions overlay
 // ---------------------------------------------------------------------------
 const dims = new THREE.Group();
-dims.visible = false;
+dims.visible = true;              // the sofa's own measurements are always shown
+let roomDims = false;             // room-planning lines: walkway, TV distance, clearances
+let dimIsRoom = false;
 scene.add(dims);
 const dimMat = new THREE.LineBasicMaterial({ color: '#2b2f31', transparent: true, opacity: 0.85, depthTest: false });
 const dimLabels = $('#dimlabels');
@@ -775,7 +778,7 @@ function dimLine(a, b, text, tick = new THREE.Vector3(0, 0.04, 0)) {
   el.className = 'dl';
   el.textContent = text;
   dimLabels.append(el);
-  dimDefs.push({ el, at: a.clone().add(b).multiplyScalar(0.5), line: l });
+  dimDefs.push({ el, at: a.clone().add(b).multiplyScalar(0.5), line: l, room: dimIsRoom });
 }
 // seated eye ≈ 0.57 m in front of the back face; open footrest reaches ≈ 1.60 m
 const EYE_Z = 0.57, FOOTREST_Z = 1.6;
@@ -787,11 +790,12 @@ function buildDims() {
   dimLine(new THREE.Vector3(-hw - 0.14, 0.02, 0), new THREE.Vector3(-hw - 0.14, 0.02, DIM.chaiseDepth), `${cm(DIM.chaiseDepth)} chaise`, new THREE.Vector3(0.05, 0, 0));
   dimLine(new THREE.Vector3(hw + 0.14, 0.02, 0), new THREE.Vector3(hw + 0.14, 0.02, DIM.depth), `${cm(DIM.depth)} deep`, new THREE.Vector3(0.05, 0, 0));
   dimLine(new THREE.Vector3(hw + 0.14, 0, -0.02), new THREE.Vector3(hw + 0.14, DIM.backH, -0.02), `${cm(DIM.backH)} high`, new THREE.Vector3(0.05, 0, 0));
-  dimLine(new THREE.Vector3(hw - 0.5, 0, DIM.depth + 0.06), new THREE.Vector3(hw - 0.5, DIM.seatH, DIM.depth + 0.06), `${cm(DIM.seatH)} seat`, new THREE.Vector3(0.05, 0, 0));
+  dimLine(new THREE.Vector3(hw - 1.0, 0, DIM.depth + 0.06), new THREE.Vector3(hw - 1.0, DIM.seatH, DIM.depth + 0.06), `${cm(DIM.seatH)} seat`, new THREE.Vector3(0.05, 0, 0));
   const bx0 = BED.x0, bx1 = BED.x1;
   dimLine(new THREE.Vector3(bx0, DIM.seatH + 0.03, DIM.chaiseDepth + 0.02), new THREE.Vector3(bx1, DIM.seatH + 0.03, DIM.chaiseDepth + 0.02), `bed ${cm(bx1 - bx0)} × ${cm(DIM.chaiseDepth - DIM.backCushFrontZ)}`, new THREE.Vector3(0, 0.03, 0));
   dimDefs[dimDefs.length - 1].bed = true;
-  // room planning: walkway, TV distance, clearances (dashed-feel: drawn at floor level)
+  // room planning: walkway, TV distance, clearances (drawn at floor level)
+  dimIsRoom = true;
   const R = PLAN.room, kz = (PLAN.east[0].z0 + PLAN.east[0].z1) / 2;
   dimLine(new THREE.Vector3(hw, 0.03, kz), new THREE.Vector3(R.x1, 0.03, kz), `${cm(R.x1 - hw)} walkway to kitchen`, new THREE.Vector3(0, 0, 0.05));
   dimLine(new THREE.Vector3(R.x0, 0.03, R.z1 - 0.06), new THREE.Vector3(R.x1, 0.03, R.z1 - 0.06), `${cm(VR.w)} room`, new THREE.Vector3(0, 0, 0.05));
@@ -805,13 +809,13 @@ function buildDims() {
 }
 buildDims();
 function updateDimLabels() {
-  const on = dims.visible && !rig.trans;
+  const on = !rig.trans;
   dimLabels.style.display = on ? '' : 'none';
   if (!on) return;
   const W = stage.clientWidth, H = stage.clientHeight;
   const bedOut = A('bedseat', 'bed').value > 0.95;
   for (const d of dimDefs) {
-    const vis = !d.bed || bedOut;
+    const vis = (!d.bed || bedOut) && (!d.room || roomDims);
     d.line.visible = vis;
     tmpV.copy(d.at).project(camera);
     const hidden = !vis || tmpV.z > 1 || tmpV.z < -1;
@@ -1032,7 +1036,7 @@ function syncViewUI() {
   $$('#sit-seats .choice').forEach((c) => c.setAttribute('aria-pressed', String(rig.mode === 'sit' && c.dataset.key === rig.seat)));
 }
 $$('[data-mood]').forEach((b) => b.addEventListener('click', () => setMood(b.dataset.mood)));
-$('#tg-dims').addEventListener('change', (e) => { dims.visible = e.target.checked; });
+$('#tg-dims').addEventListener('change', (e) => { roomDims = e.target.checked; });
 $('#tg-decor').addEventListener('change', (e) => { try { room?.set('decor', e.target.checked ? 1 : 0); } catch (err) { console.error(err); } });
 $('#tg-pillows').addEventListener('change', syncRoomPillows);
 $('#tg-bedding').addEventListener('change', syncRoomPillows);
@@ -1173,7 +1177,7 @@ buildColourUI();
     ? 'Sofa on the 4.59 m wall, chaise at the window end. The TV hangs centred on the sofa on the bedroom wall, 108 cm to its centre, over a floating unit. A 60 cm round table sits beside the chaise and rolls aside when the bed comes out.'
     : 'At the pictured size the sofa’s end comes within about 75 cm of the kitchen opening, so the walk from the hall to the kitchen gets tight. Room-fit trims the chaise, single seat and arm to fix that.';
   $('#show-plan').addEventListener('click', () => {
-    $('#tg-dims').checked = true; dims.visible = true;
+    $('#tg-dims').checked = true; roomDims = true;
     setView('orbit', { shot: 'plan' });
   });
 }
@@ -1233,7 +1237,7 @@ if (buildErrors.length) console.warn('Placeholders used for', buildErrors);
   if (Q.get('fabric')) { look.fabric = Q.get('fabric'); applyLook(false); }
   if (Q.get('type')) { look.type = Q.get('type'); applyLook(false); }
   if (Q.get('mood')) setMood(Q.get('mood'));
-  if (Q.get('dims') === '1') { $('#tg-dims').checked = true; dims.visible = true; }
+  if (Q.get('dims') === '1') { $('#tg-dims').checked = true; roomDims = true; }
   if (Q.get('tab')) selectTab(Q.get('tab'));
   if (Q.get('ui') === '0') { $('#panel').style.display = 'none'; $('#brand').style.display = 'none'; }
   if (Q.get('hs') === '0') $('#tg-hotspots').checked = false;
