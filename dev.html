@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>module dev harness</title>
+<style>html,body{margin:0;height:100%;background:#e9e6e1;overflow:hidden;font:12px monospace}#info{display:none;position:fixed;left:6px;top:6px;white-space:pre;background:#fffc;padding:6px;max-height:95vh;overflow:auto}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head>
+<body>
+<pre id="info"></pre>
+<script type="module">
+// Module dev harness. Query params:
+//   m=recliner|console|chaise|bedseat|room   module to build
+//   arm=0|1           (recliner) build with right arm (default 1)
+//   p_<param>=<0..1>  call module.set(param, value) — e.g. p_recline=1&p_head=0.5&p_explode=0.6
+//   mode=finished|xray|frame
+//   cam=iso|front|side|left|back|top|under|close|sit|low   (+ zoom=<factor>)
+//   hl=1              tint every control object magenta (to check placement)
+//   grid=0            hide the 10 cm grid
+//   info=1            show the info JSON overlay (also always written to #info for --dom)
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { applyViewMode, DIM } from './src/core.js';
+
+const Q = Object.fromEntries(new URLSearchParams(location.search));
+const info = { errors: [] };
+const infoEl = document.getElementById('info');
+const dump = () => { infoEl.textContent = JSON.stringify(info, null, 1); };
+window.addEventListener('error', (e) => { info.errors.push(String(e.message || e)); dump(); document.title = 'error'; });
+window.addEventListener('unhandledrejection', (e) => { info.errors.push(String(e.reason && (e.reason.stack || e.reason))); dump(); document.title = 'error'; });
+if (Q.info === '1') infoEl.style.display = 'block';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(1);
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#e9e6e1');
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+scene.add(new THREE.HemisphereLight('#fffaf2', '#b9b2a6', 0.8));
+const sun = new THREE.DirectionalLight('#fff4e6', 2.2);
+sun.position.set(-2.5, 4.5, 3.5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -3; sun.shadow.camera.right = 3; sun.shadow.camera.top = 3; sun.shadow.camera.bottom = -3;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02; sun.shadow.radius = 4;
+scene.add(sun);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshStandardMaterial({ color: '#d8d3cb', roughness: 0.9 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
+if (Q.m !== 'room') scene.add(floor);
+if (Q.grid !== '0' && Q.m !== 'room') {
+  const grid = new THREE.GridHelper(4, 40, '#9a948a', '#c4bfb6');
+  grid.position.y = 0.001; scene.add(grid);
+}
+
+const REG = {
+  recliner: async () => (await import('./src/recliner.js')).createRecliner({ id: 'reclinerB', rightArm: Q.arm !== '0' }),
+  rquick: async () => (await import('./src/recliner_quick.js')).createRecliner({ id: 'reclinerB', rightArm: Q.arm !== '0' }),
+  console: async () => (await import('./src/console.js')).createConsole({ controlsFor: 'reclinerA' }),
+  chaise: async () => (await import('./src/chaise.js')).createChaise({}),
+  bedseat: async () => (await import('./src/bedseat.js')).createBedSeat({}),
+  smoke: async () => (await import('./src/_smoke.js')).createSmoke(),
+  room: async () => (await import('./src/room.js')).createRoom({ sofaWidth: 3.72, sofaDepth: DIM.chaiseDepth }),
+};
+
+const camera = new THREE.PerspectiveCamera(Q.cam === 'sit' ? 70 : 35, innerWidth / innerHeight, 0.02, 60);
+
+try {
+  const mod = await REG[Q.m || 'recliner']();
+  scene.add(mod.group);
+  if (Q.m === 'room' && Q.sofa !== '0') {
+    // translucent stand-in for the sofa footprint (world frame: back face z=0, centred on x)
+    const ghost = new THREE.MeshStandardMaterial({ color: '#c9b79a', transparent: true, opacity: 0.55 });
+    const a = new THREE.Mesh(new THREE.BoxGeometry(3.72, 0.98, 1.02), ghost); a.position.set(0, 0.49, 0.51);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.6, 0.70), ghost); b.position.set(-1.35, 0.30, 1.37);
+    scene.add(a, b);
+  }
+  for (const [k, v] of Object.entries(Q)) {
+    if (k.startsWith('p_')) mod.set(k.slice(2), isNaN(+v) ? v : parseFloat(v));
+  }
+  applyViewMode(mod.group, Q.mode || 'finished');
+  scene.updateMatrixWorld(true);
+
+  if (Q.hl === '1') {
+    for (const c of mod.controls || []) c.object.traverse((o) => {
+      if (o.isMesh) { o.material = o.material.clone(); o.material.emissive = new THREE.Color('#ff2a6d'); o.material.emissiveIntensity = 1.2; o.userData.baseMat = o.material; }
+    });
+  }
+
+  // info
+  const box = new THREE.Box3();
+  const layers = {}, labels = new Set();
+  let meshes = 0, tris = 0;
+  mod.group.traverse((o) => {
+    if (!o.isMesh) return;
+    meshes++;
+    const L = o.userData.layer || 'NO_LAYER';
+    layers[L] = (layers[L] || 0) + 1;
+    if (o.userData.label) labels.add(o.userData.label);
+    const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3;
+    if (o.visible && L !== 'NO_LAYER') { let p = o, vis = true; while (p) { if (!p.visible) vis = false; p = p.parent; } if (vis) box.expandByObject(o); }
+  });
+  const r3 = (v) => [+v.x.toFixed(3), +v.y.toFixed(3), +v.z.toFixed(3)];
+  Object.assign(info, {
+    module: mod.name, width: mod.width, params: mod.params ? Object.keys(mod.params) : null,
+    controls: (mod.controls || []).map((c) => ({ id: c.id, hint: c.hint })),
+    seats: (mod.seats || []).map((s) => ({ id: s.id, label: s.label, eye: s.anchor ? r3(s.anchor.getWorldPosition(new THREE.Vector3())) : null })),
+    visibleBounds: { min: r3(box.min), max: r3(box.max) }, meshes, triangles: Math.round(tris), layers, labels: [...labels],
+  });
+  dump();
+
+  // camera framing
+  const center = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+  const radius = Math.max(size.x, size.y, size.z) * 0.62;
+  const P = {
+    iso: [1.0, 0.75, 1.25], front: [0.0, 0.32, 1.0], side: [1.0, 0.25, 0.0], left: [-1.0, 0.25, 0.15],
+    back: [-0.45, 0.55, -1.0], top: [0.0, 1.0, 0.02], under: [0.35, -0.3, 1.0], low: [0.6, 0.12, 1.0], close: [0.55, 0.45, 0.8],
+  };
+  if (Q.cam === 'sit' && mod.seats && mod.seats[0]) {
+    const a = mod.seats[0].anchor;
+    const p = a.getWorldPosition(new THREE.Vector3());
+    const q = a.getWorldQuaternion(new THREE.Quaternion());
+    const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
+    camera.position.copy(p);
+    camera.lookAt(p.clone().add(dir));
+  } else {
+    const dir = new THREE.Vector3(...(P[Q.cam] || P.iso)).normalize();
+    const zoom = parseFloat(Q.zoom || '1');
+    const dist = (radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))) / zoom;
+    const target = Q.m === 'room' ? new THREE.Vector3(0, 0.9, 1.0) : center;
+    camera.position.copy(target).addScaledVector(dir, Q.m === 'room' ? 7 / zoom : dist);
+    if (Q.cam === 'under') camera.position.y = Math.max(0.03, camera.position.y);
+    camera.lookAt(target);
+  }
+  let frames = 0;
+  renderer.setAnimationLoop(() => {
+    renderer.render(scene, camera);
+    if (++frames === 3 && document.title !== 'error') document.title = 'ready';
+  });
+} catch (e) {
+  info.errors.push(String(e.stack || e)); dump(); document.title = 'error';
+  infoEl.style.display = 'block';
+}
+</script>
+</body>
+</html>

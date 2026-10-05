@@ -1,0 +1,362 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recliner Sectional 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Young+Serif&display=swap">
+<style>
+/* Layout: full-bleed 3D stage; a frosted birch-coloured control panel docks right on desktop
+   and becomes a bottom sheet on phones. Brand mark top-left, contextual HUD bottom-left. */
+:root {
+  --bg: #ece7df;
+  --panel: rgba(250, 248, 244, 0.9);
+  --panel-solid: #faf8f4;
+  --ink: #24282a;
+  --muted: #6a6e6e;
+  --line: rgba(36, 40, 42, 0.12);
+  --chip: #ece8e0;
+  --chip-hover: #e2ddd3;
+  --accent: #2e5652;      /* fjord pine */
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(46, 86, 82, 0.12);
+  --shadow: 0 10px 40px rgba(40, 32, 22, 0.16), 0 1px 3px rgba(40, 32, 22, 0.08);
+  --hot: #ffffff;
+  --hot-ink: #24282a;
+  --font-ui: "Albert Sans", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --font-name: "Young Serif", Georgia, "Times New Roman", serif;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d2021; --panel: rgba(30, 33, 34, 0.9); --panel-solid: #1e2122; --ink: #ebe8e2; --muted: #a2a6a5;
+    --line: rgba(255, 255, 255, 0.12); --chip: #2b2f30; --chip-hover: #353a3b; --accent: #8cc2b8; --accent-ink: #11201e;
+    --accent-soft: rgba(140, 194, 184, 0.16); --shadow: 0 10px 40px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --hot: #24282a; --hot-ink: #ebe8e2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d2021; --panel: rgba(30, 33, 34, 0.9); --panel-solid: #1e2122; --ink: #ebe8e2; --muted: #a2a6a5;
+  --line: rgba(255, 255, 255, 0.12); --chip: #2b2f30; --chip-hover: #353a3b; --accent: #8cc2b8; --accent-ink: #11201e;
+  --accent-soft: rgba(140, 194, 184, 0.16); --shadow: 0 10px 40px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --hot: #24282a; --hot-ink: #ebe8e2; color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; overflow: hidden; -webkit-font-smoothing: antialiased; }
+#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+#stage { position: absolute; inset: 0; }
+#c { width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* brand */
+.brand { position: absolute; left: 20px; top: calc(16px + env(safe-area-inset-top, 0px)); pointer-events: none; max-width: min(520px, calc(100% - 420px)); }
+.brand h1 { margin: 0; font-family: var(--font-name); font-weight: 400; font-size: 26px; letter-spacing: -0.01em; line-height: 1.1; color: #2a2723; text-wrap: balance; }
+.brand p { margin: 6px 0 0; font-size: 12.5px; color: #5c5853; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.brand.dark-scene h1 { color: #f1ede6; } .brand.dark-scene p { color: #cfc9bf; }
+
+/* panel */
+#panel { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; bottom: 16px; width: 356px; display: flex; flex-direction: column;
+  background: var(--panel); backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; z-index: 5; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px; border-bottom: 1px solid var(--line); flex: none; }
+.tabs button { border: 0; background: transparent; padding: 9px 4px; border-radius: 9px; font-weight: 600; font-size: 13px; color: var(--muted); letter-spacing: 0.01em; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--panel-solid); }
+.tabs button:hover:not([aria-selected="true"]) { background: var(--chip); color: var(--ink); }
+.sheet-handle { display: none; }
+.tab-body { overflow-y: auto; padding: 6px 16px 18px; flex: 1; overscroll-behavior: contain; }
+section[data-tab] { display: grid; gap: 14px; padding-top: 10px; }
+h3 { margin: 4px 0 0; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.note { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* mechanism cards */
+.mech { border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: grid; gap: 10px; background: color-mix(in srgb, var(--panel-solid) 70%, transparent); }
+.mech-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.mech-name { font-weight: 650; font-size: 14.5px; }
+.mech-val { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mech-val.on { color: var(--accent); font-weight: 600; }
+.ctrl { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+.ctrl .lbl { font-size: 12px; color: var(--muted); grid-column: 1 / -1; margin-bottom: -4px; }
+.btn { border: 1px solid var(--line); background: var(--chip); border-radius: 9px; padding: 8px 11px; font-weight: 600; font-size: 12.5px; white-space: nowrap; transition: background .15s, transform .08s; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.btn:hover { background: var(--chip-hover); }
+.btn:active, .btn.pressing { transform: scale(0.97); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.icon { padding: 8px 10px; min-width: 38px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; height: 22px; }
+.presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.presets .btn { padding: 10px 6px; display: grid; gap: 2px; text-align: center; white-space: normal; }
+.presets .btn small { font-weight: 500; font-size: 11px; color: var(--muted); }
+.presets .btn:hover small { color: var(--ink); }
+
+/* segmented */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--chip); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { border: 0; background: transparent; border-radius: 8px; padding: 8px 6px; font-weight: 600; font-size: 13px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--panel-solid); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.choice { border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 10px; text-align: left; display: grid; gap: 2px; }
+.choice b { font-weight: 650; font-size: 13px; }
+.choice span { font-size: 11.5px; color: var(--muted); }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.choice:hover { background: var(--chip); }
+.toggles { display: grid; gap: 2px; }
+.tog { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.tog:last-child { border-bottom: 0; }
+.tog small { display: block; color: var(--muted); font-size: 11.5px; }
+.switch { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 22px; background: var(--chip-hover); position: relative; cursor: pointer; flex: none; transition: background .15s; margin: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.switch:checked { background: var(--accent); }
+.switch:checked::after { transform: translateX(16px); }
+
+/* legend */
+.legend { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font-size: 12.5px; }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; border: 1px solid var(--line); }
+.specs { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 12.5px; }
+.specs dt { color: var(--muted); }
+.specs dd { margin: 0; }
+
+/* colour */
+.curated { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.cur { border: 1px solid var(--line); background: transparent; border-radius: 11px; padding: 9px 10px; text-align: left; display: grid; gap: 7px; }
+.cur:hover { background: var(--chip); }
+.cur[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.cur b { font-weight: 650; font-size: 12.5px; }
+.dots { display: flex; }
+.dots i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--panel-solid); margin-left: -5px; box-shadow: 0 0 0 1px var(--line); }
+.dots i:first-child { margin-left: 0; width: 22px; height: 22px; margin-top: -2px; }
+.swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.sw { aspect-ratio: 1; max-width: 100%; border-radius: 50%; border: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); position: relative; padding: 0; }
+.sw[aria-pressed="true"]::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--accent); }
+.sw-name { font-size: 12.5px; color: var(--muted); margin-top: -4px; }
+.sw-name b { color: var(--ink); font-weight: 650; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 11px 6px 7px; font-size: 12.5px; font-weight: 550; display: inline-flex; align-items: center; gap: 7px; }
+.chip i { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+.chip.noswatch { padding-left: 11px; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.chip:hover { background: var(--chip); }
+
+/* overlays */
+#hotspots, #dimlabels { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.hs { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); pointer-events: auto; border: 0; background: var(--hot); color: var(--hot-ink); border-radius: 999px;
+  padding: 5px 10px 5px 6px; font-size: 12px; font-weight: 650; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.18); white-space: nowrap; transition: opacity .2s; }
+.hs::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent-soft); animation: pulse 2.2s infinite; }
+.hs.dim { opacity: .38; }
+.hs.on::before { background: #d08a3c; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46,86,82,.45); } 70% { box-shadow: 0 0 0 9px rgba(46,86,82,0); } 100% { box-shadow: 0 0 0 0 rgba(46,86,82,0); } }
+.dl { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); background: rgba(36,40,42,.86); color: #fff; font-size: 11.5px; font-weight: 600; padding: 3px 7px; border-radius: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#tip { position: absolute; left: 0; top: 0; z-index: 6; pointer-events: none; background: rgba(28,30,31,.92); color: #f4f1ea; padding: 6px 9px; border-radius: 8px; font-size: 12.5px; font-weight: 600; max-width: 260px; opacity: 0; transition: opacity .12s; }
+#tip small { display: block; font-weight: 500; color: #c9c4ba; font-size: 11.5px; }
+#tip.show { opacity: 1; }
+
+#hud { position: absolute; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 4; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; max-width: calc(100% - 420px);
+  background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 14px; padding: 8px; box-shadow: var(--shadow); }
+#hud[hidden] { display: none !important; }
+#hud .where { padding: 0 6px; font-size: 13px; }
+#hud .where b { font-weight: 700; }
+.pad { display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(2, 34px); gap: 4px; }
+.pad .btn { padding: 0; display: grid; place-items: center; }
+.pad [data-walk="f"] { grid-column: 2; grid-row: 1; } .pad [data-walk="l"] { grid-column: 1; grid-row: 2; } .pad [data-walk="b"] { grid-column: 2; grid-row: 2; } .pad [data-walk="r"] { grid-column: 3; grid-row: 2; }
+#loading { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--bg); transition: opacity .5s; }
+#loading.done { opacity: 0; pointer-events: none; }
+#loading div { display: grid; gap: 10px; justify-items: center; color: var(--muted); font-size: 13px; }
+#loading b { font-family: var(--font-name); font-weight: 400; font-size: 22px; color: var(--ink); }
+#loading .bar { width: 160px; height: 3px; border-radius: 3px; background: var(--chip); overflow: hidden; }
+#loading .bar::after { content: ""; display: block; width: 40%; height: 100%; background: var(--accent); animation: slide 1.1s infinite ease-in-out; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+#fatal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 420px; padding: 20px; background: var(--panel-solid); border-radius: 14px; box-shadow: var(--shadow); z-index: 11; }
+
+@media (max-width: 760px) {
+  .brand { left: 16px; max-width: calc(100% - 32px); }
+  .brand h1 { font-size: 20px; }
+  .brand p { font-size: 11.5px; }
+  #panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: min(50vh, 440px); border-radius: 18px 18px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); transition: height .25s ease; }
+  #panel.collapsed { height: calc(58px + env(safe-area-inset-bottom, 0px)); }
+  #panel.collapsed .tab-body { visibility: hidden; }
+  .sheet-handle { display: block; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 44px; height: 6px; border: 0; padding: 0; border-radius: 6px; background: var(--line); }
+  .tabs { padding-top: 14px; }
+  #hud { left: 16px; right: 16px; max-width: none; bottom: calc(min(50vh, 440px) + 12px); justify-content: center; }
+  #panel.collapsed ~ #hud { bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
+  .swatches { grid-template-columns: repeat(6, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .hs::before, #loading .bar::after { animation: none; } }
+</style>
+
+<div id="app">
+  <div id="stage"><canvas id="c" tabindex="0" aria-label="3D view of the sofa"></canvas></div>
+  <div id="hotspots" aria-hidden="false"></div>
+  <div id="dimlabels" aria-hidden="true"></div>
+  <header class="brand" id="brand">
+    <h1>Recliner Sectional</h1>
+    <p id="brand-sub">Chaise · single seat with pull-out bed · console · 2 power recliners</p>
+  </header>
+  <div id="tip" role="status" aria-live="polite"></div>
+
+  <aside id="panel" aria-label="Sofa controls">
+    <button class="sheet-handle" id="sheet-handle" aria-label="Expand or collapse controls"></button>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-move" aria-selected="true" data-tab="move">Move</button>
+      <button role="tab" id="tab-view" aria-selected="false" data-tab="view">View</button>
+      <button role="tab" id="tab-inside" aria-selected="false" data-tab="inside">Inside</button>
+      <button role="tab" id="tab-colour" aria-selected="false" data-tab="colour">Colour</button>
+    </div>
+    <div class="tab-body" id="tab-body">
+
+      <section data-tab="move">
+        <div class="presets">
+          <button class="btn" id="preset-movie">Movie night<small>both recline</small></button>
+          <button class="btn" id="preset-guest">Guest bed<small>bed out, made up</small></button>
+          <button class="btn" id="preset-tidy">Tidy up<small>close everything</small></button>
+        </div>
+
+        <div class="mech" data-mech="reclinerA">
+          <div class="mech-head"><span class="mech-name">Left recliner</span><span class="mech-val" id="val-reclinerA">Upright</span></div>
+          <div class="ctrl">
+            <button class="btn icon" data-hold="reclinerA:recline:-" aria-label="Move left recliner upright">Upright</button>
+            <input type="range" id="rng-reclinerA-recline" min="0" max="100" step="1" value="0" aria-label="Left recliner position">
+            <button class="btn icon primary" data-hold="reclinerA:recline:+" aria-label="Recline left recliner">Recline</button>
+          </div>
+          <div class="ctrl"><span class="lbl">Power headrest</span>
+            <button class="btn icon" data-hold="reclinerA:head:-" aria-label="Lower left headrest">−</button>
+            <input type="range" id="rng-reclinerA-head" min="0" max="100" step="1" value="0" aria-label="Left headrest tilt">
+            <button class="btn icon" data-hold="reclinerA:head:+" aria-label="Raise left headrest">+</button>
+          </div>
+        </div>
+
+        <div class="mech" data-mech="reclinerB">
+          <div class="mech-head"><span class="mech-name">Right recliner</span><span class="mech-val" id="val-reclinerB">Upright</span></div>
+          <div class="ctrl">
+            <button class="btn icon" data-hold="reclinerB:recline:-" aria-label="Move right recliner upright">Upright</button>
+            <input type="range" id="rng-reclinerB-recline" min="0" max="100" step="1" value="0" aria-label="Right recliner position">
+            <button class="btn icon primary" data-hold="reclinerB:recline:+" aria-label="Recline right recliner">Recline</button>
+          </div>
+          <div class="ctrl"><span class="lbl">Power headrest</span>
+            <button class="btn icon" data-hold="reclinerB:head:-" aria-label="Lower right headrest">−</button>
+            <input type="range" id="rng-reclinerB-head" min="0" max="100" step="1" value="0" aria-label="Right headrest tilt">
+            <button class="btn icon" data-hold="reclinerB:head:+" aria-label="Raise right headrest">+</button>
+          </div>
+          <p class="note">Press and hold to stop anywhere, or tap to run all the way. The same switches sit on the console and the right arm.</p>
+        </div>
+
+        <div class="mech" data-mech="bedseat">
+          <div class="mech-head"><span class="mech-name">Pull-out bed</span><span class="mech-val" id="val-bedseat">Folded away</span></div>
+          <div class="ctrl">
+            <button class="btn icon" data-hold="bedseat:bed:-" aria-label="Fold bed away">Fold</button>
+            <input type="range" id="rng-bedseat-bed" min="0" max="100" step="1" value="0" aria-label="Bed position">
+            <button class="btn icon primary" data-hold="bedseat:bed:+" aria-label="Pull out bed">Pull out</button>
+          </div>
+          <p class="note" id="bed-note">The single seat slides forward to the chaise's front edge and lifts level with it.</p>
+        </div>
+
+        <div class="mech">
+          <div class="mech-head"><span class="mech-name">Storage &amp; extras</span></div>
+          <div class="toggles">
+            <label class="tog"><span>Chaise storage<small>Lift the chaise seat on gas struts</small></span><input type="checkbox" class="switch" id="tg-chaise-storage" data-toggle="chaise:storage"></label>
+            <label class="tog"><span>Console lid<small>Storage, charging pad, USB</small></span><input type="checkbox" class="switch" id="tg-console-lid" data-toggle="console:lid"></label>
+            <label class="tog"><span>Coffee in the cup holders</span><input type="checkbox" class="switch" id="tg-console-cups" data-toggle="console:cups"></label>
+            <label class="tog"><span>Chaise headrest<small>Ratchet tilt</small></span><input type="checkbox" class="switch" id="tg-chaise-head" data-toggle="chaise:head"></label>
+            <label class="tog"><span>Single seat headrest<small>Ratchet tilt</small></span><input type="checkbox" class="switch" id="tg-bedseat-head" data-toggle="bedseat:head"></label>
+          </div>
+        </div>
+      </section>
+
+      <section data-tab="view" hidden>
+        <div class="mech" id="plan-card">
+          <div class="mech-head"><span class="mech-name">Your vardagsrum</span><span class="mech-val">459 × 362 cm</span></div>
+          <div class="seg" role="group" aria-label="Sofa size">
+            <button data-size="fit" aria-pressed="false">Room-fit · <span id="size-fit"></span></button>
+            <button data-size="pictured" aria-pressed="false">As pictured · <span id="size-pictured"></span></button>
+          </div>
+          <dl class="specs" id="plan-specs"></dl>
+          <p class="note" id="plan-note"></p>
+          <button class="btn primary" id="show-plan" type="button">Show the floor plan with measurements</button>
+        </div>
+        <div class="seg" role="group" aria-label="Camera">
+          <button data-view="orbit" aria-pressed="true">Orbit</button>
+          <button data-view="stand" aria-pressed="false">Stand</button>
+          <button data-view="sit" aria-pressed="false">Sit</button>
+        </div>
+        <div id="opts-orbit" class="view-opts">
+          <p class="note">Drag to turn the sofa, scroll or pinch to zoom, right-drag to pan.</p>
+          <div class="choices" id="orbit-shots"></div>
+        </div>
+        <div id="opts-stand" class="view-opts" hidden>
+          <p class="note">You're standing at eye height. Drag to look around; walk with W A S D, the arrow keys or the pad.</p>
+          <div class="choices" id="stand-spots"></div>
+        </div>
+        <div id="opts-sit" class="view-opts" hidden>
+          <p class="note">First-person from the seat. Recline while seated and the view tips back with you.</p>
+          <div class="choices" id="sit-seats"></div>
+        </div>
+        <h3>Scene</h3>
+        <div class="seg" role="group" aria-label="Light">
+          <button data-mood="day" aria-pressed="true">Daylight</button>
+          <button data-mood="evening" aria-pressed="false">Evening</button>
+        </div>
+        <div class="toggles">
+          <label class="tog"><span>Hotspots<small>Labels on everything that moves</small></span><input type="checkbox" class="switch" id="tg-hotspots" checked></label>
+          <label class="tog"><span>Dimensions</span><input type="checkbox" class="switch" id="tg-dims"></label>
+          <label class="tog"><span>Cushions &amp; throw</span><input type="checkbox" class="switch" id="tg-pillows" checked></label>
+          <label class="tog"><span>Bedding<small>Appears when the bed is out</small></span><input type="checkbox" class="switch" id="tg-bedding" checked></label>
+          <label class="tog"><span>Room styling<small>Lamp, tables, plant, art</small></span><input type="checkbox" class="switch" id="tg-decor" checked></label>
+        </div>
+      </section>
+
+      <section data-tab="inside" hidden>
+        <div class="seg" role="group" aria-label="Construction view">
+          <button data-mode="finished" aria-pressed="true">Finished</button>
+          <button data-mode="xray" aria-pressed="false">X-ray</button>
+          <button data-mode="frame" aria-pressed="false">Frame only</button>
+        </div>
+        <div class="ctrl" style="grid-template-columns: 1fr auto">
+          <span class="lbl">Exploded view</span>
+          <input type="range" id="rng-explode" min="0" max="100" step="1" value="0" aria-label="Exploded view amount">
+          <span class="mech-val" id="val-explode">0%</span>
+        </div>
+        <p class="note">Hover or tap any part in X-ray or Frame mode to see what it is. Try reclining with the frame showing to watch the linkage work.</p>
+        <ul class="legend">
+          <li><i style="background:#d8b98d"></i>Hardwood frame</li>
+          <li><i style="background:#2b2d30"></i>Springs &amp; webbing</li>
+          <li><i style="background:#f2dc8a"></i>Foam</li>
+          <li><i style="background:#5a5e64"></i>Steel mechanism</li>
+          <li><i style="background:#c9cbce"></i>Rods &amp; struts</li>
+          <li><i style="background:#202225"></i>Motors</li>
+        </ul>
+        <h3>How it's built</h3>
+        <dl class="specs" id="specs">
+          <dt>Frame</dt><dd>Kiln-dried hardwood rails with plywood panels</dd>
+          <dt>Seats</dt><dd>Sinuous S-springs under high-resilience foam</dd>
+          <dt>Backs</dt><dd>Elastic webbing, fibre-wrapped foam</dd>
+          <dt>Recliners</dt><dd>Power wall-hugger: footrest, back and headrest motors</dd>
+          <dt>Bed</dt><dd>Pull-out platform on runners with pop-up legs</dd>
+        </dl>
+      </section>
+
+      <section data-tab="colour" hidden>
+        <h3>Scandinavian rooms</h3>
+        <div class="curated" id="curated"></div>
+        <h3>Upholstery colour</h3>
+        <div class="swatches" id="fabric-swatches"></div>
+        <div class="sw-name" id="fabric-name"></div>
+        <h3>Fabric</h3>
+        <div class="chips" id="fabric-types"></div>
+        <h3>Legs</h3>
+        <div class="chips" id="leg-finishes"></div>
+        <h3>Cushions &amp; throw</h3>
+        <div class="chips" id="accent-colours"></div>
+        <h3>Walls</h3>
+        <div class="chips" id="wall-colours"></div>
+        <h3>Floor</h3>
+        <div class="chips" id="floor-types"></div>
+      </section>
+    </div>
+  </aside>
+
+  <div id="hud" hidden></div>
+  <div id="loading"><div><b>Recliner Sectional</b><span id="loading-msg">Upholstering cushions…</span><span class="bar"></span></div></div>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script type="module" src="./src/app.js"></script></html>

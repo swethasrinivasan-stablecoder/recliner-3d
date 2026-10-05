@@ -1,0 +1,7 @@
+.cache/
+shots/
+apptest.html
+src/_stubs/
+src/_smoke.js
+.DS_Store
+reference.jpg
